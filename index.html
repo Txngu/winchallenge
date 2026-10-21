@@ -6,9 +6,6 @@
 <title>Win Challenge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{--bg:#0b0a1a;--panel:rgba(255,255,255,.055);--line:rgba(255,255,255,.12);--tx:#ecebff;--mut:#9a97c4;--pur:#8b5cf6;--blu:#38bdf8;--grn:#34d399;--yel:#fbbf24;--red:#f87171;--cy:#60a5fa}
@@ -30,6 +27,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:4px 6px;text-align:left;
 #modal{position:fixed;inset:0;background:rgba(5,4,15,.75);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:20px;z-index:5}#modal.on{display:flex}#modal .panel{background:#14122d;max-width:620px;width:100%}
 .auth{max-width:380px;margin:12vh auto}.auth form{display:flex;flex-direction:column;gap:10px}
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#3b1d5c;border:1px solid var(--pur);padding:8px 16px;border-radius:10px;display:none;z-index:9;max-width:90vw}
+.pn{border-bottom:1px dotted var(--blu);cursor:help}#pimg{position:fixed;display:none;z-index:20;max-width:220px;max-height:220px;border-radius:12px;border:2px solid var(--pur);box-shadow:0 8px 30px rgba(0,0,0,.6);pointer-events:none;background:#14122d}
 h2{font-size:17px;margin:0 0 8px}.log{max-height:260px;overflow:auto;font-size:12px}@media(prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
 </head>
@@ -40,13 +38,19 @@ h2{font-size:17px;margin:0 0 8px}.log{max-height:260px;overflow:auto;font-size:1
 const SUPABASE_URL = 'https://enuporifxxwfwhgpcqdo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_7dRuMHfaD9Mdhyj1lvZOUg_arxnEwE7';
 /* ======================================================================================================= */
+/* ====== 2. HOVER PHOTOS: add a player here. Key = their username OR display name, in lowercase. Value = image path or full URL. ====== */
+const PLAYER_IMAGES = {
+  sven: 'images/sven.png  
+};
+/* ======================================================================================================= */
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let S = {ins:[],prog:[],parts:[],contrib:[],lb:[],vc:[],mv:[],profiles:[],names:{},online:[],log:[],hist:[],open:null,metric:'mvp',mode:'in'}, off = 0, me = null, chOnline = null, timer = null;
 const ST = {active:'🟢 Active',waiting:'🟡 Waiting',completed:'🔵 Completed',not_started:'🔴 Not started'};
 const isAdm = () => S.me?.role === 'admin';
-const nm = id => esc(S.names[id] || 'Unknown');
+const nmp = id => esc(S.names[id] || 'Unknown');
+const nm = id => { const p = S.profiles.find(x => x.id === id); const img = p && (PLAYER_IMAGES[p.username.toLowerCase()] || PLAYER_IMAGES[p.display_name.toLowerCase()]); return img ? `<span class="pn" data-img="${esc(img)}">${esc(p.display_name)}</span>` : nmp(id); };
 const p2 = n => String(n).padStart(2,'0');
 function fmt(sec){sec=Math.max(0,Math.floor(sec));const d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60;return (d?p2(d)+':':'')+p2(h)+':'+p2(m)+':'+p2(s);}
 function elapsed(w){if(!w||!w.started_at)return 0;if(w.status==='completed')return w.elapsed_seconds||0;const now=w.status==='paused'?new Date(w.paused_at).getTime():Date.now()+off;return (now-new Date(w.started_at).getTime())/1000-w.paused_seconds;}
@@ -118,12 +122,12 @@ function card(i){
   if(i.status==='completed'){
     const top=t=>{const r=S.vc.filter(v=>v.challenge_instance_id===i.id&&v.vote_type===t).sort((a,b)=>b.n-a.n)[0];return r?`${nm(r.target_user_id)} — ${r.n} vote${r.n>1?'s':''}`:'no votes yet';};
     const voted=t=>S.mv.some(v=>v.challenge_instance_id===i.id&&v.vote_type===t);
-    const form=(t,l)=>voted(t)?`<span class="mut">${l} vote cast ✔</span>`:`<span class="row"><select id="v-${t}-${i.id}">${allU.filter(u=>u!==me.id).map(u=>`<option value="${u}">${nm(u)}</option>`).join('')}</select><button data-a="vote" data-i="${i.id}" data-t="${t}">Vote ${l}</button></span>`;
+    const form=(t,l)=>voted(t)?`<span class="mut">${l} vote cast ✔</span>`:`<span class="row"><select id="v-${t}-${i.id}">${allU.filter(u=>u!==me.id).map(u=>`<option value="${u}">${nmp(u)}</option>`).join('')}</select><button data-a="vote" data-i="${i.id}" data-t="${t}">Vote ${l}</button></span>`;
     vote=`<div>🏆 MVP: <b>${top('MVP')}</b><br>🪨 Most Carried: <b>${top('MOST_CARRIED')}</b></div>${allU.includes(me.id)?form('MVP','MVP')+form('MOST_CARRIED','Most Carried'):''}`;
   }
-  return `<div class="panel card"><div class="row sp"><h3>${esc(i.icon)} ${esc(i.name)}</h3><span class="chip s-${i.status}">${ST[i.status]}</span></div>
+  return `<div class="panel card"><div class="row sp"><h3>${esc(i.icon)} ${esc(i.name)}${i.optional?' <span class="chip">Optional</span>':''}</h3><span class="chip s-${i.status}">${ST[i.status]}</span></div>
   <div class="row sp mut"><span>${esc(i.category)}</span><span>Players ${ps.length} / ${i.min_players===i.max_players?i.max_players:i.min_players+'–'+i.max_players}</span></div>
-  <div class="row sp"><b>${Math.round(iPct(i)*100)}%</b><div style="flex:1">${bar(iPct(i))}</div></div>${objHTML(i)}
+  ${i.description?`<div class="mut">${esc(i.description)}</div>`:''}<div class="row sp"><b>${Math.round(iPct(i)*100)}%</b><div style="flex:1">${bar(iPct(i))}</div></div>${objHTML(i)}
   <div class="mut">${ps.length?'Playing: '+ps.map(p=>nm(p.user_id)).join(', '):'Nobody has joined yet'}${miss&&ps.length?` · waiting for ${miss} more`:''}</div>
   ${i.status==='completed'?`<div class="mut">Finished at ${fmt(i.elapsed_seconds||0)} · ${new Date(i.completed_at).toLocaleString()}</div>`:''}${vote}
   <div class="row">${i.status!=='completed'&&run?(mine?`<button class="g" data-a="leave" data-i="${i.id}">Leave</button>`:`<button data-a="join" data-i="${i.id}">Join</button>`):''}
@@ -133,8 +137,8 @@ function card(i){
 }
 
 function render(){
-  if(!me)return;const w=S.win,adm=isAdm();
-  const done=S.ins.filter(i=>i.status==='completed').length,tot=S.ins.length;
+  if(!me)return;const tp=$('#pimg');if(tp)tp.style.display='none';const w=S.win,adm=isAdm();
+  const req=S.ins.filter(i=>!i.optional),done=req.filter(i=>i.status==='completed').length,tot=req.length;
   const st={draft:'⚪ Ready to start',running:'🟢 In progress',paused:'⏸️ Paused',completed:'🏁 Finished'}[w?.status]||'No Win Challenge yet';
   const metric=S.metric,rate=u=>u.participated?u.mvp/u.participated:0;
   const lb=[...S.lb].sort((a,b)=>(metric==='rate'?rate(b)-rate(a):b[metric]-a[metric])||a.display_name.localeCompare(b.display_name));
@@ -153,9 +157,9 @@ function render(){
    <h2 style="margin-top:18px">Completed</h2><div class="cards">${fin||'<div class="panel mut">No completed challenges yet.</div>'}</div>`}</div>
   <div style="display:flex;flex-direction:column;gap:14px">
    <div class="panel"><h2>Leaderboard</h2><select id="metric">${[['mvp','🏆 MVP votes'],['carried','🪨 Most Carried'],['rate','MVP rate'],['participated','Completed challenges played']].map(([k,l])=>`<option value="${k}" ${k===metric?'selected':''}>${l}</option>`).join('')}</select>
-    <ol class="lb">${lb.map((u,n)=>`<li><span>${medal[n]||n+1+'.'} ${esc(u.display_name)}</span><b>${val(u)}</b></li>`).join('')}</ol><div class="mut">Challenge wins = completed challenges you took part in.</div></div>
+    <ol class="lb">${lb.map((u,n)=>`<li><span>${medal[n]||n+1+'.'} ${nm(u.user_id)}</span><b>${val(u)}</b></li>`).join('')}</ol><div class="mut">Challenge wins = completed challenges you took part in.</div></div>
    <div class="panel"><h2>Online now</h2>${S.online.length?S.online.map(id=>`<div>🟢 ${nm(id)}</div>`).join(''):'<span class="mut">Just you.</span>'}</div>
-   ${adm?`<div class="panel"><h2>Players</h2>${S.profiles.map(p=>`<div class="row sp"><span>${esc(p.display_name)} <span class="mut">@${esc(p.username)}</span></span>${p.id!==me.id?`<button class="g" data-a="role" data-u="${p.id}" data-r="${p.role==='admin'?'player':'admin'}">${p.role==='admin'?'Remove admin':'Make admin'}</button>`:'<span class="mut">you</span>'}</div>`).join('')}</div>
+   ${adm?`<div class="panel"><h2>Players</h2>${S.profiles.map(p=>`<div class="row sp"><span>${nm(p.id)} <span class="mut">@${esc(p.username)}</span></span>${p.id!==me.id?`<button class="g" data-a="role" data-u="${p.id}" data-r="${p.role==='admin'?'player':'admin'}">${p.role==='admin'?'Remove admin':'Make admin'}</button>`:'<span class="mut">you</span>'}</div>`).join('')}</div>
    <div class="panel"><h2>Activity log</h2><div class="log">${S.log.map(l=>`<div><span class="mut">${new Date(l.created_at).toLocaleTimeString()}</span> ${nm(l.user_id)} · ${esc(l.action)} ${esc(JSON.stringify(l.metadata))}</div>`).join('')}</div></div>`:''}
   </div></div></div>`;
   $('#metric').onchange=e=>{S.metric=e.target.value;render();};
@@ -166,15 +170,16 @@ function renderModal(){
   const m=$('#modal'),i=S.ins.find(x=>x.id===S.open);
   if(!i){m.classList.remove('on');m.innerHTML='';return;}
   if(m.contains(document.activeElement)&&/INPUT|SELECT/.test(document.activeElement.tagName))return;
-  m.classList.add('on');const ps=act(i.id),opts=ps.map(p=>`<option value="${p.user_id}">${nm(p.user_id)}</option>`).join(''),lock=i.status==='completed';
+  m.classList.add('on');const ps=act(i.id),opts=ps.map(p=>`<option value="${p.user_id}">${nmp(p.user_id)}</option>`).join(''),lock=i.status==='completed';
   const ctl=i.progression_schema.map(o=>{const v=Number(prog(i.id,o.key)?.current_value||0),k=`data-i="${i.id}" data-k="${o.key}"`;let c='';
     if(lock)return '';
-    if(o.type==='counter')c=`<button class="g" data-a="inc" ${k} data-v="-1">−</button><b>${v}</b><button data-a="inc" ${k} data-v="1">+</button><span class="mut">/ ${o.target}</span>`;
+    if(o.type==='counter'&&o.target>=50)c=`<input id="in-${o.key}" type="number" min="0" value="${v}" style="width:110px"><button data-a="set" ${k}>Save</button><span class="mut">/ ${o.target}</span>`;
+    else if(o.type==='counter')c=`<button class="g" data-a="inc" ${k} data-v="-1">−</button><b>${v}</b><button data-a="inc" ${k} data-v="1">+</button><span class="mut">/ ${o.target}</span>`;
     else if(o.type==='flag')c=`<button class="${v>=1?'':'g'}" data-a="set" ${k} data-v="${v>=1?0:1}">${v>=1?'YES ✅ (tap to undo)':'Mark as done'}</button>`;
     else if(o.type==='streak')c=`<button data-a="win" ${k}>Win +1</button><button class="d" data-a="loss" ${k}>Loss (reset streak)</button><span class="mut">${v} / ${o.target}</span>`;
     else if(o.type==='money'||o.type==='lte')c=`<input id="in-${o.key}" type="number" min="0" value="${v}" style="width:120px"><button data-a="set" ${k}>Save</button>`;
-    else if(o.type==='team_total')c=`<select id="pl">${opts}</select><input id="amt" type="number" min="1" value="10" style="width:80px"><button data-a="contrib" data-i="${i.id}" data-m="add">Add</button>`;
-    else c=`<select id="pl">${opts}</select><input id="amt" type="number" min="0" value="1" style="width:70px"><input id="lang" placeholder="Language" style="width:110px"><button data-a="contrib" data-i="${i.id}" data-m="set">Set</button>`;
+    else if(o.type==='team_total')c=`<select id="pl">${opts}</select><input id="amt" type="number" min="0.1" step="any" value="1" style="width:80px"><button data-a="contrib" data-i="${i.id}" data-m="add">Add</button>`;
+    else c=`<select id="pl">${opts}</select><input id="amt" type="number" min="0" step="any" value="1" style="width:80px"><input id="lang" placeholder="Note (optional)" style="width:130px"><button data-a="contrib" data-i="${i.id}" data-m="set">Set</button>`;
     return `<div class="obj"><span>${esc(o.label)}</span><div class="row">${c}</div></div>`;}).join('');
   const lab=k=>k.startsWith('player:')?'Contribution by '+nm(k.slice(7)):esc(i.progression_schema.find(o=>o.key===k)?.label||k);
   m.innerHTML=`<div class="panel"><div class="row sp"><h2>${esc(i.icon)} ${esc(i.name)}</h2><button class="g" data-a="close">Close</button></div>
@@ -213,6 +218,12 @@ const A = {
   role:d=>confirm('Change this player\'s role?')&&R('admin_set_role',{p_user:d.u,p_role:d.r}),
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&A[b.dataset.a])A[b.dataset.a](b.dataset);});
+
+/* ---------- hover photo tooltip ---------- */
+const tip=document.createElement('img');tip.id='pimg';tip.alt='';document.body.appendChild(tip);
+document.addEventListener('mouseover',e=>{const n=e.target.closest&&e.target.closest('.pn');if(n){tip.src=n.dataset.img;tip.style.display='block';}});
+document.addEventListener('mousemove',e=>{if(tip.style.display!=='block')return;tip.style.left=Math.max(4,Math.min(e.clientX+16,innerWidth-tip.offsetWidth-8))+'px';tip.style.top=Math.max(4,Math.min(e.clientY+16,innerHeight-tip.offsetHeight-8))+'px';});
+document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest('.pn'))tip.style.display='none';});
 
 /* ---------- boot ---------- */
 async function start(session){
