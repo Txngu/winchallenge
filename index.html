@@ -40,7 +40,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_7dRuMHfaD9Mdhyj1lvZOUg_arxnEwE7';
 /* ======================================================================================================= */
 /* ====== 2. HOVER PHOTOS: add a player here. Key = their username OR display name, in lowercase. Value = image path or full URL. ====== */
 const PLAYER_IMAGES = {
-  sven: 'https://enuporifxxwfwhgpcqdo.supabase.co/storage/v1/object/public/website-assets/sven.png'
+  risel: 'https://enuporifxxwfwhgpcqdo.supabase.co/storage/v1/object/public/website-assets/sven.png'
 };
 /* ======================================================================================================= */
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -50,7 +50,8 @@ let S = {ins:[],prog:[],parts:[],contrib:[],lb:[],vc:[],mv:[],profiles:[],names:
 const ST = {active:'🟢 Active',waiting:'🟡 Waiting',completed:'🔵 Completed',not_started:'🔴 Not started'};
 const isAdm = () => S.me?.role === 'admin';
 const nmp = id => esc(S.names[id] || 'Unknown');
-const nm = id => { const p = S.profiles.find(x => x.id === id); const img = p && (PLAYER_IMAGES[p.username.toLowerCase()] || PLAYER_IMAGES[p.display_name.toLowerCase()]); return img ? `<span class="pn" data-img="${esc(img)}">${esc(p.display_name)}</span>` : nmp(id); };
+const imgFor = p => { if (!p) return null; const names = [p.username, p.display_name].map(x => String(x || '').toLowerCase().trim()); const k = Object.keys(PLAYER_IMAGES).find(k => names.some(x => x === k || x.includes(k))); return k ? PLAYER_IMAGES[k] : null; };
+const nm = id => { const p = S.profiles.find(x => x.id === id); const img = imgFor(p); return img ? `<span class="pn" data-img="${esc(img)}">${esc(p.display_name)}</span>` : nmp(id); };
 const p2 = n => String(n).padStart(2,'0');
 function fmt(sec){sec=Math.max(0,Math.floor(sec));const d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60;return (d?p2(d)+':':'')+p2(h)+':'+p2(m)+':'+p2(s);}
 function elapsed(w){if(!w||!w.started_at)return 0;if(w.status==='completed')return w.elapsed_seconds||0;const now=w.status==='paused'?new Date(w.paused_at).getTime():Date.now()+off;return (now-new Date(w.started_at).getTime())/1000-w.paused_seconds;}
@@ -221,6 +222,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&
 
 /* ---------- hover photo tooltip ---------- */
 const tip=document.createElement('img');tip.id='pimg';tip.alt='';document.body.appendChild(tip);
+tip.onerror=()=>{tip.style.display='none';toast('The hover image could not be loaded. Check the link on the PLAYER_IMAGES line (the Supabase bucket must be public).');};
 document.addEventListener('mouseover',e=>{const n=e.target.closest&&e.target.closest('.pn');if(n){tip.src=n.dataset.img;tip.style.display='block';}});
 document.addEventListener('mousemove',e=>{if(tip.style.display!=='block')return;tip.style.left=Math.max(4,Math.min(e.clientX+16,innerWidth-tip.offsetWidth-8))+'px';tip.style.top=Math.max(4,Math.min(e.clientY+16,innerHeight-tip.offsetHeight-8))+'px';});
 document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest('.pn'))tip.style.display='none';});
