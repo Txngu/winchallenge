@@ -151,7 +151,7 @@ function render(){
   <div class="panel hero"><div class="mut">${esc(w?.name||'')} · ${st}</div><div id="clock">${fmt(elapsed(w))}</div>
   ${w?.started_at?`<div class="mut">Started ${new Date(w.started_at).toLocaleString()}${w.completed_at?` · Finished ${new Date(w.completed_at).toLocaleString()}`:''}</div>`:''}
   <div style="max-width:560px;margin:12px auto 0"><div class="row sp"><span>${done} / ${tot} challenges completed</span><span>${tot?Math.round(done/tot*100):0}%</span></div>${bar(tot?done/tot:0)}</div>
-  ${adm?`<div class="row" style="justify-content:center;margin-top:12px">${!w||w.status==='completed'?'<button data-a="create">Create Win Challenge</button>':''}${w?.status==='draft'?'<button data-a="wa" data-w="start">Start timer</button>':''}${w?.status==='running'?'<button class="g" data-a="wa" data-w="pause">Pause</button>':''}${w?.status==='paused'?'<button data-a="wa" data-w="resume">Resume</button>':''}${['running','paused'].includes(w?.status)?'<button class="d" data-a="wa" data-w="end">End challenge</button>':''}</div>`:''}</div>
+  ${adm?`<div class="row" style="justify-content:center;margin-top:12px">${!w||w.status==='completed'?'<button data-a="create">Create Win Challenge</button>':''}${w?.status==='draft'?'<button data-a="wa" data-w="start">Start timer</button>':''}${w?.status==='running'?'<button class="g" data-a="wa" data-w="pause">Pause</button>':''}${w?.status==='paused'?'<button data-a="wa" data-w="resume">Resume</button>':''}${['running','paused'].includes(w?.status)?'<button class="d" data-a="wa" data-w="end">End challenge</button>':''}${w?'<button class="d" data-a="resetwin">Reset everything</button>':''}</div>`:''}</div>
   <div class="grid"><div>${!w?`<div class="panel">${adm?'Create a Win Challenge to begin.':'Waiting for the admin to create the Win Challenge.'}</div>`:`
    <h2>Active and waiting</h2><div class="cards">${activeC||'<div class="panel mut">Nothing is being played right now. Join a challenge below.</div>'}</div>
    <h2 style="margin-top:18px">Not started</h2><div class="cards">${todo||'<div class="panel mut">Every challenge has been picked up.</div>'}</div>
@@ -210,6 +210,7 @@ const A = {
   vote:d=>R('cast_vote',{p_instance:d.i,p_target:val(`#v-${d.t}-${d.i}`),p_type:d.t}),
   create:()=>{const n=prompt('Name of the new Win Challenge:','Win Challenge');if(n)R('create_win',{p_name:n});},
   wa:d=>(d.w==='start'||d.w==='end'?confirm(d.w==='start'?'Start the global timer now?':'End the whole Win Challenge now? This stops the timer.'):true)&&R('win_action',{p_id:S.win.id,p_action:d.w}),
+  resetwin:()=>{if(prompt('This sets the timer back to 00:00:00 and puts ALL challenges back to default.\nAll progress, joined players and votes will be deleted. This cannot be undone.\n\nType RESET to confirm:')==='RESET')R('admin_reset_win',{p_id:S.win.id});},
   addall:d=>R('admin_add_all',{p_instance:d.i}),
   force:d=>confirm('Mark complete even though requirements are not met? This is logged.')&&R('admin_set_complete',{p_instance:d.i,p_complete:true}),
   reopen:d=>confirm('Undo this completion?')&&R('admin_set_complete',{p_instance:d.i,p_complete:false}),
