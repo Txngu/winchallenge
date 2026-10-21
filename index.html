@@ -6,6 +6,9 @@
 <title>Win Challenge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{--bg:#0b0a1a;--panel:rgba(255,255,255,.055);--line:rgba(255,255,255,.12);--tx:#ecebff;--mut:#9a97c4;--pur:#8b5cf6;--blu:#38bdf8;--grn:#34d399;--yel:#fbbf24;--red:#f87171;--cy:#60a5fa}
@@ -34,8 +37,8 @@ h2{font-size:17px;margin:0 0 8px}.log{max-height:260px;overflow:auto;font-size:1
 <div id="app"></div><div id="modal"></div><div id="toast"></div>
 <script>
 /* ====== 1. PASTE YOUR SUPABASE VALUES HERE (Project Settings > API). Use the anon/public key only. ====== */
-const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+const SUPABASE_URL = 'https://enuporifxxwfwhgpcqdo.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_7dRuMHfaD9Mdhyj1lvZOUg_arxnEwE7';
 /* ======================================================================================================= */
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = s => document.querySelector(s);
